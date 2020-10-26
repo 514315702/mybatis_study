@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+       Copyright 2009-2020 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.studymybatis.demo.mapper.UserMapper">
+    <resultMap id="SysUserResult" type="User">
+        <id column="id" property="id" />
+        <result column="name" property="name"/>
+        <result column="login_name" property="loginName"/>
+        <result column="photo" property="photo"/>
+        <result column="phone" property="phone"/>
+        <result column="create_date" property="createDate"/>
+    </resultMap>
+
+    <!--测试where if 等-->
+    <select id="findUser" resultMap="SysUserResult">
+        select * from sys_user
+        <where>
+            <if test="name != null and name != ''">
+                and name = #{name}
+            </if>
+        </where>
+    </select>
+
+    <!--测试#{}的-->
+    <select id="findById" resultMap="SysUserResult">
+        select * from sys_user where id= #{id}
+    </select>
+
+    <!--测试${}的-->
+    <select id="findUserById" resultMap="SysUserResult">
+        select * from sys_user where id= #{id}
+    </select>
+
+    <!--测试没有参数-->
+    <select id="findAll"  resultMap="SysUserResult">
+        select * from sys_user
+    </select>
+
+</mapper>
