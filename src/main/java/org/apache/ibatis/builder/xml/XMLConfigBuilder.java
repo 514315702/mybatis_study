@@ -92,6 +92,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public Configuration parse() {
+    //判断是否已经被解析过
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
@@ -107,16 +108,30 @@ public class XMLConfigBuilder extends BaseBuilder {
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
       loadCustomLogImpl(settings);
+      //解析别名
       typeAliasesElement(root.evalNode("typeAliases"));
+      //插件的解析
       pluginElement(root.evalNode("plugins"));
+      //objectFactory自定义实例化对象的行为
+      //查询返回User对象，给对象默认值，重写ObjectFactory 可赋默认值
+      //<objectFactory type="org.studymybatis.demo.entity.User">
+      //      <property name="name" value="1"/> //赋予默认值
+      // </objectFactory>
       objectFactoryElement(root.evalNode("objectFactory"));
+      //MateObject 方便反射操作实体类对象
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      //解析jdbc节点
       environmentsElement(root.evalNode("environments"));
+      //动态数据原的节点解析
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+
+     //typeHandlers又叫类型处理器, javaType和jdbcType来决定采用哪个typeHandler来处理这些转换规则
       typeHandlerElement(root.evalNode("typeHandlers"));
+
+      //解析mapper节点，通过mapper节点找到mapper 文件
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -161,16 +176,22 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
+          //两个方式，一种是package
           String typeAliasPackage = child.getStringAttribute("name");
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
         } else {
+          //一种是alias 例如 org.studymybatis.demo.entity.User  对应
+          //alias ="User" type = "org.studymybatis.demo.entity.User"
           String alias = child.getStringAttribute("alias");
           String type = child.getStringAttribute("type");
           try {
+            //加载对象
             Class<?> clazz = Resources.classForName(type);
             if (alias == null) {
+              //别名未空的情况下
               typeAliasRegistry.registerAlias(clazz);
             } else {
+              //别名不为空的情况下
               typeAliasRegistry.registerAlias(alias, clazz);
             }
           } catch (ClassNotFoundException e) {
@@ -360,19 +381,30 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析mapper节点
+   * @param parent
+   * @throws Exception
+   */
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //首先解析package节点 package和mapper 节点只会解析一个
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
+          //这个文件的相对应的地址 ，只能一个有值
+          //resource = mapper/UserMapper.xml
           String resource = child.getStringAttribute("resource");
+          //url 文件地址
           String url = child.getStringAttribute("url");
+          //直接的class地址
           String mapperClass = child.getStringAttribute("class");
           if (resource != null && url == null && mapperClass == null) {
             ErrorContext.instance().resource(resource);
             InputStream inputStream = Resources.getResourceAsStream(resource);
+            //解析resource.xml
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url != null && mapperClass == null) {

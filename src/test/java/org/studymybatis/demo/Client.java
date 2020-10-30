@@ -34,7 +34,7 @@ public class Client {
     InputStream resourceAsStream = Resources.getResourceAsStream(resource);
     SqlSessionFactory build = new SqlSessionFactoryBuilder().build(resourceAsStream);
     SqlSession sqlSession = build.openSession();
-
+    //通过动态代理
     UserMapper mapper = sqlSession.getMapper(UserMapper.class);
     System.out.println(mapper.findById(1));
     sqlSession.close();

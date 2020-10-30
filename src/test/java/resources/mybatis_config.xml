@@ -6,6 +6,8 @@
     <!--<settings>
         <setting name="logImpl" value="LOG4J"/>
     </settings>-->
+
+
     <typeAliases>
         <typeAlias type="org.studymybatis.demo.entity.User" alias="user" />
     </typeAliases>

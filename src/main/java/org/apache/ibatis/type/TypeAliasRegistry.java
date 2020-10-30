@@ -142,20 +142,25 @@ public class TypeAliasRegistry {
     String alias = type.getSimpleName();
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
     if (aliasAnnotation != null) {
+      //是否加了注解@Alias
       alias = aliasAnnotation.value();
     }
     registerAlias(alias, type);
   }
 
   public void registerAlias(String alias, Class<?> value) {
+    //一定要有别名，否则报错
     if (alias == null) {
       throw new TypeException("The parameter alias cannot be null");
     }
-    // issue #748
+    // issue #748   不区分大小写，同意转化未小写
     String key = alias.toLowerCase(Locale.ENGLISH);
+    //typeAliases中存在很多默认别名  Map(java.util.map)
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {
+      //判断别名是否注册过
       throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + typeAliases.get(key).getName() + "'.");
     }
+    //加入到mybatis别民库，
     typeAliases.put(key, value);
   }
 
