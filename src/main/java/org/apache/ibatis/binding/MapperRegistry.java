@@ -58,16 +58,20 @@ public class MapperRegistry {
   }
 
   public <T> void addMapper(Class<T> type) {
+    //判断是否是接口
     if (type.isInterface()) {
+      //判断是否存在
       if (hasMapper(type)) {
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        //准备代理对象（此处未进行代理）
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
+        //注解解析
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
         parser.parse();
         loadCompleted = true;

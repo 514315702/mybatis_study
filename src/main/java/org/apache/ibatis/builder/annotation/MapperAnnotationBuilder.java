@@ -112,10 +112,16 @@ public class MapperAnnotationBuilder {
     this.type = type;
   }
 
+  /**
+   * 解析mapper 对象
+   */
   public void parse() {
     String resource = type.toString();
+    //如果之前解析了xml 现在不解析
     if (!configuration.isResourceLoaded(resource)) {
+      //首先还是解析xml
       loadXmlResource();
+
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
       parseCache();
@@ -129,6 +135,9 @@ public class MapperAnnotationBuilder {
           parseResultMap(method);
         }
         try {
+          /**
+           * 注解的解析
+           */
           parseStatement(method);
         } catch (IncompleteElementException e) {
           configuration.addIncompleteMethod(new MethodResolver(this, method));
@@ -163,6 +172,7 @@ public class MapperAnnotationBuilder {
     // to prevent loading again a resource twice
     // this flag is set at XMLMapperBuilder#bindMapperForNamespace
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
+      //截取类名找xml文件，xml文件和类名文件名一样
       String xmlResource = type.getName().replace('.', '/') + ".xml";
       // #1347
       InputStream inputStream = type.getResourceAsStream("/" + xmlResource);
@@ -176,6 +186,7 @@ public class MapperAnnotationBuilder {
       }
       if (inputStream != null) {
         XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource, configuration.getSqlFragments(), type.getName());
+        //xml 解析
         xmlParser.parse();
       }
     }
@@ -293,12 +304,17 @@ public class MapperAnnotationBuilder {
     return null;
   }
 
+  /**
+   * 注解解析过程与xml一致
+   * @param method
+   */
   void parseStatement(Method method) {
     final Class<?> parameterTypeClass = getParameterType(method);
     final LanguageDriver languageDriver = getLanguageDriver(method);
 
     getAnnotationWrapper(method, true, statementAnnotationTypes).ifPresent(statementAnnotation -> {
       final SqlSource sqlSource = buildSqlSource(statementAnnotation.getAnnotation(), parameterTypeClass, languageDriver, method);
+      //获取类型，解析增删改查
       final SqlCommandType sqlCommandType = statementAnnotation.getSqlCommandType();
       final Options options = getAnnotationWrapper(method, false, Options.class).map(x -> (Options)x.getAnnotation()).orElse(null);
       final String mappedStatementId = type.getName() + "." + method.getName();
@@ -673,6 +689,10 @@ public class MapperAnnotationBuilder {
     private final String databaseId;
     private final SqlCommandType sqlCommandType;
 
+    /**
+     * 构造方法
+     * @param annotation
+     */
     AnnotationWrapper(Annotation annotation) {
       super();
       this.annotation = annotation;

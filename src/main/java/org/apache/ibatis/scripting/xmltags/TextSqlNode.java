@@ -38,6 +38,10 @@ public class TextSqlNode implements SqlNode {
     this.injectionFilter = injectionFilter;
   }
 
+  /**
+   * 是否动态解析，判断节点
+   * @return
+   */
   public boolean isDynamic() {
     DynamicCheckerTokenParser checker = new DynamicCheckerTokenParser();
     GenericTokenParser parser = createParser(checker);
@@ -52,6 +56,11 @@ public class TextSqlNode implements SqlNode {
     return true;
   }
 
+  /**
+   * $的匹配
+   * @param handler
+   * @return
+   */
   private GenericTokenParser createParser(TokenHandler handler) {
     return new GenericTokenParser("${", "}", handler);
   }
@@ -99,6 +108,7 @@ public class TextSqlNode implements SqlNode {
       return isDynamic;
     }
 
+    //当扫描到${}的时候调用此方法，其实就是不解析，在运行的时候替换成具体的值
     @Override
     public String handleToken(String content) {
       this.isDynamic = true;

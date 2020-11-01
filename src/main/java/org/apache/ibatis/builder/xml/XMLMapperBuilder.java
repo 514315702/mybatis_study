@@ -93,11 +93,13 @@ public class XMLMapperBuilder extends BaseBuilder {
   public void parse() {
     //判断文件是否解析过
     if (!configuration.isResourceLoaded(resource)) {
+      //解析mapper.xml文件
       configurationElement(parser.evalNode("/mapper"));
+      //放入环境中
       configuration.addLoadedResource(resource);
+      //绑定namespace 的class对象
       bindMapperForNamespace();
     }
-
     parsePendingResultMaps();
     parsePendingCacheRefs();
     parsePendingStatements();
@@ -126,7 +128,9 @@ public class XMLMapperBuilder extends BaseBuilder {
       //解析resultMap节点
       resultMapElements(context.evalNodes("/mapper/resultMap"));
 
+      //解析sql节点 <sql></sql>
       sqlElement(context.evalNodes("/mapper/sql"));
+      //解析增删改查节点
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -134,6 +138,7 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   private void buildStatementFromContext(List<XNode> list) {
+    //判断是否穿数据库id
     if (configuration.getDatabaseId() != null) {
       buildStatementFromContext(list, configuration.getDatabaseId());
     }
@@ -144,8 +149,20 @@ public class XMLMapperBuilder extends BaseBuilder {
     for (XNode context : list) {
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
+        //解析sql ，有可能顺序原因倒是出错
+        /**
+         * <insert>
+         *   <selectKey  key = "a"></selectKey>
+         * </insert>
+         *
+         * <select id = "a"></select>
+         */
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
+        /**
+         * 这个时候直接将节点直接添加到IncompleteStatement中
+         * 跳过此节点不解析 在下步操作拿到解析
+         */
         configuration.addIncompleteStatement(statementParser);
       }
     }
@@ -181,7 +198,11 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   *
+   */
   private void parsePendingStatements() {
+    //拿到上一步的IncompleteStatements的值，重新解析
     Collection<XMLStatementBuilder> incompleteStatements = configuration.getIncompleteStatements();
     synchronized (incompleteStatements) {
       Iterator<XMLStatementBuilder> iter = incompleteStatements.iterator();
@@ -223,6 +244,10 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析ParameterMapper
+   * @param list
+   */
   private void parameterMapElement(List<XNode> list) {
     for (XNode parameterMapNode : list) {
       String id = parameterMapNode.getStringAttribute("id");
@@ -242,6 +267,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         Class<?> javaTypeClass = resolveClass(javaType);
         JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
         Class<? extends TypeHandler<?>> typeHandlerClass = resolveClass(typeHandler);
+        //最总解析成ParameterMapping对象
         ParameterMapping parameterMapping = builderAssistant.buildParameterMapping(parameterClass, property, javaTypeClass, jdbcTypeEnum, resultMap, modeEnum, typeHandlerClass, numericScale);
         parameterMappings.add(parameterMapping);
       }
@@ -263,6 +289,13 @@ public class XMLMapperBuilder extends BaseBuilder {
     return resultMapElement(resultMapNode, Collections.emptyList(), null);
   }
 
+  /**
+   * 解析resultMap
+   * @param resultMapNode
+   * @param additionalResultMappings
+   * @param enclosingType
+   * @return
+   */
   private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings, Class<?> enclosingType) {
     ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
     String type = resultMapNode.getStringAttribute("type",
@@ -429,6 +462,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     if (namespace != null) {
       Class<?> boundType = null;
       try {
+        //解析成对象
         boundType = Resources.classForName(namespace);
       } catch (ClassNotFoundException e) {
         // ignore, bound type is not required
