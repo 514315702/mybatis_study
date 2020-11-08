@@ -30,9 +30,12 @@ import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
+ *
+ * 序列化
  */
 public class SerializedCache implements Cache {
 
+  /**被装饰者*/
   private final Cache delegate;
 
   public SerializedCache(Cache delegate) {
@@ -51,6 +54,7 @@ public class SerializedCache implements Cache {
 
   @Override
   public void putObject(Object key, Object object) {
+    //是否序列化
     if (object == null || object instanceof Serializable) {
       delegate.putObject(key, serialize((Serializable) object));
     } else {

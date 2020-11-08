@@ -234,11 +234,13 @@ public final class TypeHandlerRegistry {
     if (ParamMap.class.equals(type)) {
       return null;
     }
+    //不同参数对相应不同额类型
     Map<JdbcType, TypeHandler<?>> jdbcHandlerMap = getJdbcHandlerMap(type);
     TypeHandler<?> handler = null;
     if (jdbcHandlerMap != null) {
       handler = jdbcHandlerMap.get(jdbcType);
       if (handler == null) {
+        //如果没有赋值
         handler = jdbcHandlerMap.get(null);
       }
       if (handler == null) {
@@ -251,6 +253,7 @@ public final class TypeHandlerRegistry {
   }
 
   private Map<JdbcType, TypeHandler<?>> getJdbcHandlerMap(Type type) {
+    //映射java 对象
     Map<JdbcType, TypeHandler<?>> jdbcHandlerMap = typeHandlerMap.get(type);
     if (NULL_TYPE_HANDLER_MAP.equals(jdbcHandlerMap)) {
       return null;

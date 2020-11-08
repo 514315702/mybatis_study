@@ -69,9 +69,10 @@ public class CacheKey implements Cloneable, Serializable {
     return updateList.size();
   }
 
+  //hashcode计算
   public void update(Object object) {
     int baseHashCode = object == null ? 1 : ArrayUtil.hashCode(object);
-
+    //有几个判断依据
     count++;
     checksum += baseHashCode;
     baseHashCode *= count;

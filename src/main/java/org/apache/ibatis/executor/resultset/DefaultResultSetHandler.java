@@ -552,10 +552,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     return autoMapping;
   }
 
+  //映射值，结果集的值
   private boolean applyAutomaticMappings(ResultSetWrapper rsw, ResultMap resultMap, MetaObject metaObject, String columnPrefix) throws SQLException {
     List<UnMappedColumnAutoMapping> autoMapping = createAutomaticMappings(rsw, resultMap, metaObject, columnPrefix);
     boolean foundValues = false;
     if (!autoMapping.isEmpty()) {
+      //遍历映射的值
       for (UnMappedColumnAutoMapping mapping : autoMapping) {
         final Object value = mapping.typeHandler.getResult(rsw.getResultSet(), mapping.column);
         if (value != null) {

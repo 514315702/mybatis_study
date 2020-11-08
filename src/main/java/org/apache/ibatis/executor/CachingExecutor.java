@@ -39,6 +39,7 @@ import org.apache.ibatis.transaction.Transaction;
 public class CachingExecutor implements Executor {
 
   private final Executor delegate;
+  //缓存事务管理器
   private final TransactionalCacheManager tcm = new TransactionalCacheManager();
 
   public CachingExecutor(Executor delegate) {
@@ -84,22 +85,43 @@ public class CachingExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //获得所有前面解析的MappedStatement
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    //生成CacheKey的key
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
+  /**
+   * MappedStatement 作用域为全局的 此对象为 mapper.xml
+   * @param ms
+   * @param parameterObject
+   * @param rowBounds
+   * @param resultHandler
+   * @param key
+   * @param boundSql
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    //拿二级缓存
     Cache cache = ms.getCache();
+    //二级缓存是否为空 <cache></cache> 是否有这个节点
     if (cache != null) {
+      //是否刷新缓存 <select flushcache...   默认增删改刷新，查询不刷新
       flushCacheIfRequired(ms);
+      //<select usercache=false.. 是否禁用缓存，默认是ture
       if (ms.isUseCache() && resultHandler == null) {
+        //处理存储过程
         ensureNoOutParams(ms, boundSql);
         @SuppressWarnings("unchecked")
+          //从事务管理器获得缓存
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
+
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
           tcm.putObject(cache, key, list); // issue #578 and #116
         }

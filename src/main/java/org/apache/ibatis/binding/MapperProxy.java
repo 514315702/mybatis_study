@@ -44,6 +44,12 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   private final Class<T> mapperInterface;
   private final Map<Method, MapperMethodInvoker> methodCache;
 
+  /**
+   *
+   * @param sqlSession
+   * @param mapperInterface 自己的mapper对象
+   * @param methodCache   同一个session缓存，不会多次代理
+   */
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethodInvoker> methodCache) {
     this.sqlSession = sqlSession;
     this.mapperInterface = mapperInterface;
@@ -63,6 +69,14 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     if (privateLookupInMethod == null) {
       // JDK 1.8
       try {
+        //类似于反射 更轻量点，构建方法句柄
+        /**
+         * function test2(){}
+         *
+         * finction test1(test2){}
+         *
+         * 所有对象构建成MethodHandles   例如上面的test2
+         */
         lookup = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
         lookup.setAccessible(true);
       } catch (NoSuchMethodException e) {
@@ -76,12 +90,15 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     lookupConstructor = lookup;
   }
 
+  //执行代理方法的invoke
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      //判读是否调用obj 默认方法，调用默认方法不代理，执行原来的
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       } else {
+        //不是默认方法的情况下
         return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
       }
     } catch (Throwable t) {
@@ -89,17 +106,20 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     }
   }
 
+
   private MapperMethodInvoker cachedInvoker(Method method) throws Throwable {
     try {
       // A workaround for https://bugs.openjdk.java.net/browse/JDK-8161372
       // It should be removed once the fix is backported to Java 8 or
       // MyBatis drops Java 8 support. See gh-1929
+      //判断是否代理
       MapperMethodInvoker invoker = methodCache.get(method);
       if (invoker != null) {
         return invoker;
       }
 
       return methodCache.computeIfAbsent(method, m -> {
+        //判断是否是默认方法
         if (m.isDefault()) {
           try {
             if (privateLookupInMethod == null) {
@@ -121,6 +141,14 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     }
   }
 
+  /**
+   * Java9 方法句柄
+   * @param method
+   * @return
+   * @throws NoSuchMethodException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
   private MethodHandle getMethodHandleJava9(Method method)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     final Class<?> declaringClass = method.getDeclaringClass();
@@ -129,6 +157,14 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
         declaringClass);
   }
 
+  /**
+   * 如果是默认方法。他会把方法绑定到代理对象中去，再调用
+   * @param method
+   * @return
+   * @throws IllegalAccessException
+   * @throws InstantiationException
+   * @throws InvocationTargetException
+   */
   private MethodHandle getMethodHandleJava8(Method method)
       throws IllegalAccessException, InstantiationException, InvocationTargetException {
     final Class<?> declaringClass = method.getDeclaringClass();
@@ -147,6 +183,15 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       this.mapperMethod = mapperMethod;
     }
 
+    /**
+     * 执行方法
+     * @param proxy
+     * @param method
+     * @param args
+     * @param sqlSession
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args, SqlSession sqlSession) throws Throwable {
       return mapperMethod.execute(sqlSession, args);

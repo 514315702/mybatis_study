@@ -18,10 +18,13 @@ package org.apache.ibatis.cache.decorators;
 import org.apache.ibatis.cache.Cache;
 
 /**
- * @author Clinton Begin
+ * @author Clinton Begin\
+ * 所有的加了Synchronized
+ * 装饰类
  */
 public class SynchronizedCache implements Cache {
 
+  /**被装饰者*/
   private final Cache delegate;
 
   public SynchronizedCache(Cache delegate) {

@@ -120,16 +120,21 @@ public class ParamNameResolver {
    * @return the named params
    */
   public Object getNamedParams(Object[] args) {
+    //方法上面所有的名称
     final int paramCount = names.size();
+    //没有参数
     if (args == null || paramCount == 0) {
       return null;
+      //只有一个参数，且没有注解
     } else if (!hasParamAnnotation && paramCount == 1) {
       Object value = args[names.firstKey()];
       return wrapToMapIfCollection(value, useActualParamName ? names.get(0) : null);
     } else {
+      //多个参数的情况下
       final Map<String, Object> param = new ParamMap<>();
       int i = 0;
       for (Map.Entry<Integer, String> entry : names.entrySet()) {
+        //entry.getValue() 参数名称，jdk 的bug  拿不到参数名，最后是arg0,arg1
         param.put(entry.getValue(), args[entry.getKey()]);
         // add generic param names (param1, param2, ...)
         final String genericParamName = GENERIC_NAME_PREFIX + (i + 1);

@@ -60,6 +60,7 @@ public class ScheduledCache implements Cache {
     return clearWhenStale() ? null : delegate.getObject(key);
   }
 
+
   @Override
   public Object removeObject(Object key) {
     clearWhenStale();
@@ -68,6 +69,7 @@ public class ScheduledCache implements Cache {
 
   @Override
   public void clear() {
+    //清空缓存
     lastClear = System.currentTimeMillis();
     delegate.clear();
   }
@@ -82,7 +84,12 @@ public class ScheduledCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 刷新缓存的方法，在上面几个方法中调用（remove,put等执行时候）
+   * @return
+   */
   private boolean clearWhenStale() {
+    //系统时间  - 上次操作时间  > 清理时间
     if (System.currentTimeMillis() - lastClear > clearInterval) {
       clear();
       return true;

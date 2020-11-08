@@ -44,11 +44,20 @@ public class MapperProxyFactory<T> {
   }
 
   @SuppressWarnings("unchecked")
+  /**
+   * 使用jdk 原生代理
+   */
   protected T newInstance(MapperProxy<T> mapperProxy) {
+    /**
+     * 1 类加载器
+     * 2 代理对象
+     * 3 代理缓存
+     */
     return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
   }
 
   public T newInstance(SqlSession sqlSession) {
+
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
     return newInstance(mapperProxy);
   }

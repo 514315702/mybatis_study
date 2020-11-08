@@ -131,12 +131,19 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //ms.getBoundSql(parameter); 如果是#在此处不会处理，如果是$在此处处理
     BoundSql boundSql = ms.getBoundSql(parameter);
+    //key的生成
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
 
   @SuppressWarnings("unchecked")
+  /**
+   * MappedStatement作用于全局共享
+   *
+   * 一级缓存
+   */
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing a query").object(ms.getId());
@@ -149,10 +156,13 @@ public abstract class BaseExecutor implements Executor {
     List<E> list;
     try {
       queryStack++;
+      //此处为一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        //此处为存储过程，输出资源的处理
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //查数据库
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -191,19 +201,38 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 创建缓存的逻辑
+   * @param ms
+   * @param parameterObject
+   * @param rowBounds
+   * @param boundSql
+   * @return
+   */
   @Override
   public CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql) {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
     CacheKey cacheKey = new CacheKey();
+
+    //做hashcode计算
+
+    //sql 的id相同
     cacheKey.update(ms.getId());
+
+    //判断分页是的起始位置
     cacheKey.update(rowBounds.getOffset());
+    //判断分页条数
     cacheKey.update(rowBounds.getLimit());
+    //判断sql  解析后的sql
     cacheKey.update(boundSql.getSql());
+
+    //获得所有参数对象
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
     // mimic DefaultParameterHandler logic
+    //便利参数对象
     for (ParameterMapping parameterMapping : parameterMappings) {
       if (parameterMapping.getMode() != ParameterMode.OUT) {
         Object value;
@@ -218,6 +247,7 @@ public abstract class BaseExecutor implements Executor {
           MetaObject metaObject = configuration.newMetaObject(parameterObject);
           value = metaObject.getValue(propertyName);
         }
+        //将值给hashcode
         cacheKey.update(value);
       }
     }
@@ -320,6 +350,7 @@ public abstract class BaseExecutor implements Executor {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    //缓存占位，空的object
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);

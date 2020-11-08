@@ -54,7 +54,14 @@ public class MapperMethod {
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
+  /**
+   * 执行sql 操作
+   * @param sqlSession
+   * @param args
+   * @return
+   */
   public Object execute(SqlSession sqlSession, Object[] args) {
+
     Object result;
     switch (command.getType()) {
       case INSERT: {
@@ -73,11 +80,15 @@ public class MapperMethod {
         break;
       }
       case SELECT:
+        //执行查询
+          //没有返回值
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
+          //返回多个的情况下
         } else if (method.returnsMany()) {
           result = executeForMany(sqlSession, args);
+          //返回map
         } else if (method.returnsMap()) {
           result = executeForMap(sqlSession, args);
         } else if (method.returnsCursor()) {
@@ -139,8 +150,10 @@ public class MapperMethod {
 
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+     //拿到方法的签名,返回也就是方法参数名
     Object param = method.convertArgsToSqlCommandParam(args);
     if (method.hasRowBounds()) {
+      //分页参数，mybatis 默认分页，查询出所有数据，再分页
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
     } else {

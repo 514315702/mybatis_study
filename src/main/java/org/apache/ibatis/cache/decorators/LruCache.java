@@ -27,8 +27,11 @@ import org.apache.ibatis.cache.Cache;
  */
 public class LruCache implements Cache {
 
+  /**被装饰者*/
   private final Cache delegate;
+  /**记录所有key*/
   private Map<Object, Object> keyMap;
+  /**最长时间不使用的kye*/
   private Object eldestKey;
 
   public LruCache(Cache delegate) {
@@ -64,6 +67,7 @@ public class LruCache implements Cache {
   @Override
   public void putObject(Object key, Object value) {
     delegate.putObject(key, value);
+    //缓存回收
     cycleKeyList(key);
   }
 

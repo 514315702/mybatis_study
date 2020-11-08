@@ -20,6 +20,7 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.studymybatis.demo.entity.User;
 import org.studymybatis.demo.mapper.UserMapper;
 
 import java.io.IOException;
@@ -32,11 +33,16 @@ public class Client {
   public static void main(String[] args) throws IOException {
     String resource = "mybatis_config.xml";
     InputStream resourceAsStream = Resources.getResourceAsStream(resource);
+    //加载mybatis配置文件及mapper.xml
     SqlSessionFactory build = new SqlSessionFactoryBuilder().build(resourceAsStream);
+    //创建一个session，默认不会自动提交事务，在close之前  需要调用sqlSession.commit();
     SqlSession sqlSession = build.openSession();
-    //通过动态代理
+    //通过动态代理，此处为代理类，执行方法也是代理方法
+    //MapperProxy中的invoke
     UserMapper mapper = sqlSession.getMapper(UserMapper.class);
-    System.out.println(mapper.findById(1));
+    //
+    User user = mapper.findById(1);
+    System.out.println(user);
     sqlSession.close();
 
   }

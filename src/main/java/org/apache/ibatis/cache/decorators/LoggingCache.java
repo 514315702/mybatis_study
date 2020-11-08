@@ -25,6 +25,7 @@ import org.apache.ibatis.logging.LogFactory;
 public class LoggingCache implements Cache {
 
   private final Log log;
+  /**被装饰者*/
   private final Cache delegate;
   protected int requests = 0;
   protected int hits = 0;
@@ -56,6 +57,7 @@ public class LoggingCache implements Cache {
     if (value != null) {
       hits++;
     }
+    //必须开启debug
     if (log.isDebugEnabled()) {
       log.debug("Cache Hit Ratio [" + getId() + "]: " + getHitRatio());
     }

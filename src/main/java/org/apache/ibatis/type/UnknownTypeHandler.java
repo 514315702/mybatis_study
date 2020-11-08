@@ -90,6 +90,12 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
     return cs.getObject(columnIndex);
   }
 
+  /**
+   * 参数类型对应数据类型
+   * @param parameter
+   * @param jdbcType
+   * @return
+   */
   private TypeHandler<?> resolveTypeHandler(Object parameter, JdbcType jdbcType) {
     TypeHandler<?> handler;
     if (parameter == null) {

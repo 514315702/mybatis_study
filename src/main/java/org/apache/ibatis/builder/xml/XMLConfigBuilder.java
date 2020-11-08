@@ -121,6 +121,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       //MateObject 方便反射操作实体类对象
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      //配置
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
       //解析jdbc节点
@@ -265,6 +266,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void settingsElement(Properties props) {
     configuration.setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
     configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
+    //默认是开启状态
     configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));
     configuration.setProxyFactory((ProxyFactory) createInstance(props.getProperty("proxyFactory")));
     configuration.setLazyLoadingEnabled(booleanValueOf(props.getProperty("lazyLoadingEnabled"), false));

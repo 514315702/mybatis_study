@@ -115,12 +115,14 @@ public class CacheBuilder {
     }
   }
 
+  //装饰者设计模式
   private Cache setStandardDecorators(Cache cache) {
     try {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
       if (size != null && metaCache.hasSetter("size")) {
         metaCache.setValue("size", size);
       }
+      //只有flushInterval配置了才有效
       if (clearInterval != null) {
         cache = new ScheduledCache(cache);
         ((ScheduledCache) cache).setClearInterval(clearInterval);
